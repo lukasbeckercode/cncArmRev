@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"go.bug.st/serial.v1"
+	"go.bug.st/serial"
 	"log"
 	"math/rand"
 	"net/http"
@@ -45,9 +45,9 @@ func main() {
 }
 
 func createCode() {
-	for i := 0; i <= cycles; i++ {
+	for i := 0; i < cycles; i++ {
+		rand.Seed(time.Now().UnixNano())
 		diameter := rand.Intn(max-min+1) + min //this gives us a random number within our borders
-
 		//Absolute Borders are X260, Y630 Create new virtual borders here
 		xMax := 260 - diameter
 		yMax := 630 - diameter
@@ -80,11 +80,12 @@ func createCode() {
 		//create the g-code
 		cmd1 := "G01 X" + strconv.Itoa(startX) + " Y" + strconv.Itoa(startY) + "\n"
 		cmd2 := "G02 X" + strconv.Itoa(startX) + " Y" + strconv.Itoa(startY) + " I" + strconv.Itoa(Mx) + " J" + strconv.Itoa(My) + "\n"
-
+		fmt.Println(cmd1)
 		//add the g-code to a slice
 		commands = append(commands, cmd1, cmd2)
-
+		time.Sleep(1)
 	}
+
 	send() //now send the g-code to grbl
 }
 
@@ -110,7 +111,7 @@ func send() {
 			log.Fatal(err)
 
 		}
-		if n == 0 { //For some reason, this wont work...
+		if n == 0 { //Error handling
 			fmt.Println("\nEOF")
 
 			break
@@ -137,6 +138,7 @@ func send() {
 		}
 		bytes += n
 		//time.Sleep(time.Second) we might need this to slow down sending...
+		//Alternatively, we could wait for the ok. from GRBL
 	}
 	fmt.Printf("Wrote %b bytes\n", bytes)
 	err2 := port.Close()
